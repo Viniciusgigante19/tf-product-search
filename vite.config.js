@@ -15,7 +15,7 @@ export default defineConfig(({ command, mode }) => {
             open: (process.env.IS_CONTAINER !== "TRUE"),
             hmr: true,
             host: true,
-            port: 5173
+            port: 5174
         },
         resolve: {
             alias: {

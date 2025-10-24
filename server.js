@@ -1,12 +1,17 @@
 import express from 'express';
 import chalk from 'chalk';
 
+import CorsMiddleware from './app/Http/Middlewares/CorsMiddleware.js';
+
 import "./bootstrap/app.js"
 import routes from "./routes/routes.js";
 import initRelations from "./config/sequelize_relations.js";
 
 /** Iniciar roteador */
 const app = express();
+
+/* Cors */
+app.use(CorsMiddleware);
 
 /** Inicializar rotas  */
 app.use("/", routes);

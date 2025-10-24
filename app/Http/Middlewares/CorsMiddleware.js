@@ -1,15 +1,22 @@
 export default function CorsMiddleware(request, response, next) {
-    const domain = "http://localhost:5173";
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174"
+  ];
 
-    response.header("Access-Control-Allow-Origin", domain);
-    response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    response.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    response.header('Access-Control-Allow-Credentials', 'true');
+  const origin = request.headers.origin;
 
-    // Navegadores mandam uma requisição OPTIONS antes de POST/PUT/DELETE
-    if (request.method === "OPTIONS") {
-        return response.sendStatus(200);
-    }
+  if (allowedOrigins.includes(origin)) {
+    response.header("Access-Control-Allow-Origin", origin);
+  }
 
-    return next();
-};
+  response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  response.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  response.header("Access-Control-Allow-Credentials", "true");
+
+  if (request.method === "OPTIONS") {
+    return response.sendStatus(200);
+  }
+
+  next();
+}

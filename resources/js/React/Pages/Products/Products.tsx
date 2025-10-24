@@ -1,7 +1,6 @@
 
 import ProductList from "@app/js/React/components/ProductList/ProductList";
 import ProductCreateForm from "@app/js/React/components/ProductCreateForm/ProductCreateForm";
-import ProductSearchBar from "@app/js/React/components/ProductSearchBar/ProductSearchBar";
 import { useEffect, useState } from "react";
 import { ProductModel } from "@app/js/app.types";
 import productListApi from "@app/js/services/api/productListApi";
@@ -35,7 +34,6 @@ export default function Products() {
         <div className="row g-4">
             <ProductCreateForm onCreate={createProductHandler} />
             <ProductList products={productList} onDelete={deleteProductHandler} />
-            <ProductSearchBar/>
         </div>
     );
 }

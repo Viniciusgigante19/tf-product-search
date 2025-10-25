@@ -1,45 +1,42 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ProductModel } from "@app/js/app.types";
 import { formatDate, formatPrice } from "@app/js/services/helpers";
 import productDeleteApi from "@app/js/services/api/productDeleteApi";
-import productListApi from "@app/js/services/api/productListApi";
 import { ProductListProps } from "./ProductList.types";
 
 export default function ProductList({ products, onDelete }: ProductListProps) {
   const [data, setData] = useState<ProductModel[] | "error" | undefined>(products);
-  const [searchQuery, setSearchQuery] = useState("");
-  const debounceRef = useRef<number | undefined>(undefined); // Corrigido para browser
+  const [searchItem, setSearchItem] = useState("");
 
+  const debounceRef = useRef<number | null>(null);
+
+  // Constante para produtos filtrados localmente
+  const filteredProducts =
+    Array.isArray(products) && searchItem
+      ? products.filter(p =>
+          p.name.toLowerCase().includes(searchItem.toLowerCase())
+        )
+      : Array.isArray(products)
+      ? products
+      : [];
+
+  // Atualiza o estado 'data' com os produtos filtrados, usando debounce
   useEffect(() => {
-    setData(products);
-  }, [products]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
-  // --- Busca com debounce ---
-  useEffect(() => {
-    if (debounceRef.current) window.clearTimeout(debounceRef.current);
-
-    debounceRef.current = window.setTimeout(async () => {
-      try {
-        const resp = await productListApi(15, "id,desc", searchQuery);
-        if ("error" in resp) {
-          setData("error");
-          return;
-        }
-        setData(resp.rows);
-      } catch {
-        setData("error");
-      }
-    }, 500); // 500ms de debounce
+    debounceRef.current = window.setTimeout(() => {
+      setData(filteredProducts);
+    }, 300);
 
     return () => {
-      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [searchQuery]);
+  }, [searchItem, products]);
 
   const deleteProductHandler = (id: number) => {
     return async (event: React.MouseEvent<HTMLButtonElement>) => {
-      const resp = await productDeleteApi(id);
-      if (resp !== null) return;
+      const res = await productDeleteApi(id);
+      if (res !== null) return;
       onDelete?.();
     };
   };
@@ -59,18 +56,14 @@ export default function ProductList({ products, onDelete }: ProductListProps) {
 
   return (
     <div className="col-12 col-lg-8">
-      {/* --- Input de busca --- */}
+      {/* Campo de busca */}
       <div className="mb-4">
-        <label htmlFor="searchQuery" className="form-label">
-          Buscar produtos
-        </label>
         <input
-          id="searchQuery"
           type="text"
-          className="form-control"
-          placeholder="Digite para buscar..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          className="form-control rounded-4"
+          placeholder="Buscar produto..."
+          value={searchItem}
+          onChange={(e) => setSearchItem(e.target.value)}
         />
       </div>
 

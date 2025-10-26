@@ -1,11 +1,10 @@
 import ProductModel from "../../../../Models/ProductModel.js";
+import { Op } from "sequelize"; 
 
 export default async function ListProductController(request, response) {
 
     const HTTP_STATUS = CONSTANTS.HTTP;
-
     const ALLOWED_ORDER_FIELDS = ["id", "name"];
-
     const ALLOWED_ORDER_DIRECTION = ["asc", "desc"];
 
     const limit = parseInt(request.query.limit) || 100;
@@ -22,23 +21,28 @@ export default async function ListProductController(request, response) {
         return response.status(HTTP_STATUS.BAD_REQUEST).json({ error: `Direção Order By incorreto: ${orderDirection}.` });
     }
 
-
     if (limit > CONSTANTS.MAX_GET_LIMIT) {
         return response.status(HTTP_STATUS.BAD_REQUEST).json({ error: `Limit máximo: ${CONSTANTS.MAX_GET_LIMIT}.` });
     }
 
     try {
+        const searchQuery = request.query.query;
+
+        const whereClause = {};
+        if (searchQuery) {
+            whereClause.name = { [Op.iLike]: `%${searchQuery}%` }; // busca case-insensitive parcial
+        }
 
         const { rows, count } = await ProductModel.findAndCountAll({
+            where: whereClause,
             limit: limit + 1,
             offset: offset,
             order: [[orderField, orderDirection]]
         });
 
-        const hasMore = (rows.length > limit);
-
-        const data = (hasMore) ? (rows.slice(0, limit)) : (rows);
-        const next = (hasMore) ? (offset + limit) : (null);
+        const hasMore = rows.length > limit;
+        const data = hasMore ? rows.slice(0, limit) : rows;
+        const next = hasMore ? offset + limit : null;
 
         return response.status(HTTP_STATUS.SUCCESS).json({
             rows: data,
@@ -49,7 +53,6 @@ export default async function ListProductController(request, response) {
 
     } catch (error) {
         console.log(error);
-        return response.status(HTTP_STATUS.SERVER_ERROR).json({ error: 'Error de servidor.' })
+        return response.status(HTTP_STATUS.SERVER_ERROR).json({ error: 'Erro de servidor.' });
     }
-
 };
